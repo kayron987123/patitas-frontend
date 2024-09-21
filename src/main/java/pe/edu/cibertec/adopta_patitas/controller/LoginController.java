@@ -6,11 +6,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
+import pe.edu.cibertec.adopta_patitas.dto.LoginRequestDTO;
+import pe.edu.cibertec.adopta_patitas.dto.LoginResponseDTO;
 import pe.edu.cibertec.adopta_patitas.viewmodel.LoginModel;
 
 @Controller
 @RequestMapping("/login")
 public class LoginController {
+
+    private final RestTemplate restTemplate= new RestTemplate();
+    private final String BACKEND_URL = "http://localhost:8090/autenticacion/login";
 
     @GetMapping("/inicio")
     public String inicio(Model model) {
@@ -35,9 +41,27 @@ public class LoginController {
             return "inicio";
         }
 
-        LoginModel loginModel = new LoginModel("00", "", "Cesar Santos");
-        model.addAttribute("loginModel", loginModel);
-        return "principal";
+        //invocar servicio de autenticacion
+        LoginRequestDTO loginRequestDTO  = new LoginRequestDTO(tipoDocumento, numeroDocumento, password);
+
+        try {
+            LoginResponseDTO loginResponseDTO = restTemplate.postForObject(BACKEND_URL, loginRequestDTO, LoginResponseDTO.class);
+
+            if(loginResponseDTO != null && "00".equals(loginResponseDTO.codigo())){
+                LoginModel loginModel = new LoginModel("00", "", loginResponseDTO.nombre());
+                model.addAttribute("loginModel", loginModel);
+                return "principal";
+            }else {
+                LoginModel loginModel = new LoginModel("01", loginResponseDTO != null ? loginResponseDTO.mensaje() : "Error en la autenticación", "");
+                model.addAttribute("loginModel", loginModel);
+                return "inicio";
+            }
+        } catch (Exception e) {
+            LoginModel loginModel = new LoginModel("99", "Error al comunicar al servidor", "");
+            model.addAttribute("loginModel", loginModel);
+            return "inicio";
+        }
+
     }
 
 }
