@@ -19,7 +19,7 @@ import java.time.Duration;
 public class LoginController {
 
     @Autowired
-    RestTemplate restTemplate;
+    RestTemplate restTemplateAutenticacion;
 
     @GetMapping("/inicio")
     public String inicio(Model model) {
@@ -46,9 +46,8 @@ public class LoginController {
 
         //invocar servicio de autenticacion
         try {
-            String endpoint = "http://localhost:8090/autenticacion/login";
             LoginRequestDTO loginRequestDTO  = new LoginRequestDTO(tipoDocumento, numeroDocumento, password);
-            LoginResponseDTO loginResponseDTO = restTemplate.postForObject(endpoint, loginRequestDTO, LoginResponseDTO.class);
+            LoginResponseDTO loginResponseDTO = restTemplateAutenticacion.postForObject("/login", loginRequestDTO, LoginResponseDTO.class);
 
             if(loginResponseDTO.codigo().equals("00")){
                 LoginModel loginModel = new LoginModel("00", "", loginResponseDTO.nombre());
